@@ -1,0 +1,9 @@
+answer_prompt: |
+  Use the following movie information to answer the user's question. 
+  If any movie clearly matches the question, mention its title.
+
+  Information:
+  {context}
+
+  Original question:
+  {question}

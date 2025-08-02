@@ -1,0 +1,45 @@
+name: $(Build.SourceBranchName).$(Date:yyyyMMdd)$(Rev:.r)
+
+variables:
+  componentName: 'fastapi_rag_system'
+  artifactName: 'movies_rag_system'
+  sourcePath: '.'
+
+resources:
+  - repo: self
+    clean: true
+
+trigger:
+  branches:
+    include:
+      - main
+      - trunk
+      - feature/*
+
+stages:
+- stage: CI
+  displayName: 'Build and Package'
+  jobs:
+  - job: build
+    displayName: 'Package Project'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - checkout: self
+
+    - task: Bash@3
+      displayName: 'List Project Files'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "Listing project files:"
+          ls -la
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Full Project as Artifact'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/trunk'))
+      inputs:
+        PathtoPublish: '$(sourcePath)'
+        ArtifactName: '$(artifactName)'
+        publishLocation: 'Container'
