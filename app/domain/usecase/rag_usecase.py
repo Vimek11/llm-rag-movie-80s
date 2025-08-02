@@ -4,15 +4,22 @@ from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from app.domain.model.llm.llm_provider import LLMProvider
 from app.domain.model.vector_store.vector_store import VectorStore
+from app.domain.model.prompt.prompt_provider import PromptProvider  # ✅ nuevo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 load_dotenv()
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-def run_rag(question: str, top_k: int, llm: LLMProvider, vector_store: VectorStore) -> dict:
+def run_rag(
+    question: str,
+    top_k: int,
+    llm: LLMProvider,
+    vector_store: VectorStore,
+    prompt_provider: PromptProvider
+) -> dict:
     title = llm.extract_title(question)
-    print("Extracted title:", title)
 
     documents = []
 
@@ -22,16 +29,15 @@ def run_rag(question: str, top_k: int, llm: LLMProvider, vector_store: VectorSto
 
     if not documents:
         topic = llm.extract_topic(question)
-        print("Extracted topic:", topic)
         topic_embedding = model.encode(topic).tolist()
         documents = vector_store.get_similar_documents(topic_embedding, top_k, field="plot")
 
-    SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD"))
+    SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.30"))
     high_similarity_docs = [doc for doc in documents if doc["similarity"] >= SIMILARITY_THRESHOLD]
 
     if not high_similarity_docs:
         return {
-            "answer": "No se encontraron coincidencias claras con películas de los años 80. Intenta reformular tu pregunta para obtener mejores resultados.",
+            "answer": prompt_provider.get_prompt("error_prompt"),
             "results": [
                 {
                     "title": "Sin coincidencias",
@@ -51,14 +57,6 @@ def run_rag(question: str, top_k: int, llm: LLMProvider, vector_store: VectorSto
         """
         for doc in high_similarity_docs
     )
-
-    prompt = f"""
-        Use the following movie information to answer the user's question. If any movie clearly matches the question, mention its title.
-        Information:
-        {context}
-        Original question:
-        {question}
-    """.strip()
-
+    prompt = prompt_provider.get_prompt("answer_prompt", context=context, question=question)
     answer = llm.ask(prompt)
     return {"answer": answer, "results": high_similarity_docs}
