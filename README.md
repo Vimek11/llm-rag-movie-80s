@@ -25,7 +25,8 @@ Microservicio encargado de orquestar respuestas generadas por modelos LLM a part
 * [Variables de entorno](#variables-de-entorno)
 * [Swagger](#swagger)
 * [Arquitectura y despliegue](#arquitectura)
-* [Licencia](#licencia)
+* [Pruebas y cobertura](#Pruebas-y-cobertura)
+* [Pruebas de aceptación](#Prueba-de-aceptación)
 
 ---
 
@@ -103,3 +104,41 @@ Este proyecto puede desplegarse en AWS siguiendo la arquitectura de referencia:
 
 Puedes visualizar el diagrama de arquitectura en el archivo: docs/aws_architecture.png
 
+
+<a name="Pruebas-y-cobertura"></a>
+
+## Pruebas y cobertura
+
+Este proyecto utiliza `pytest` junto con `pytest-cov` para asegurar la calidad del código y medir la cobertura de pruebas.
+
+###  Ejecutar pruebas con cobertura
+
+Asegúrate de tener instaladas las dependencias:
+
+```bash
+pip install -r requirements.txt
+
+pytest --cov=app tests/
+
+```
+
+<a name="#Prueba-de-aceptación"></a>
+
+### Pruebas de aceptación 
+
+Las pruebas de aceptación están escritas en formato Gherkin y ejecutadas con `behave`.
+
+#### 1. Asegúrate de que la API esté corriendo
+
+Inicia el servidor local en otra terminal:
+
+```bash
+uvicorn app.infrastructure.entry_points.api:app --reload
+```
+#### 2. Asegúrate de que la API esté corriendo
+
+Ejecuta en otra terminal dentro de acceptance-test:
+
+```bash
+behave
+```
